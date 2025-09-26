@@ -1,1175 +1,498 @@
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script>
-        // Elevator data simulation
-        let elevatorData = [
-            {
-                id: 'ELV-001',
-                name: 'Office Tower A - Main',
-                riskScore: 85,
-                status: 'critical',
-                location: 'Mumbai Central',
-                sensors: {
-                    vibration: 8.2,
-                    temperature: 78,
-                    cableTension: 92,
-                    powerUsage: 145,
-                    doorTiming: 3.8,
-                    usage: 245
-                },
-                alerts: ['Motor overheating detected', 'Vibration levels elevated'],
-                prediction: 'Motor bearing failure in 5-7 days'
-            },
-            {
-                id: 'ELV-002',
-                name: 'Residential Complex B',
-                riskScore: 45,
-                status: 'warning',
-                location: 'Andheri West',
-                sensors: {
-                    vibration: 4.1,
-                    temperature: 65,
-                    cableTension: 88,
-                    powerUsage: 120,
-                    doorTiming: 2.9,
-                    usage: 180
-                },
-                alerts: ['Door timing slightly delayed'],
-                prediction: 'Door adjustment needed in 2 weeks'
-            },
-            {
-                id: 'ELV-003',
-                name: 'Shopping Mall C',
-                riskScore: 15,
-                status: 'healthy',
-                location: 'Bandra East',
-                sensors: {
-                    vibration: 2.1,
-                    temperature: 58,
-                    cableTension: 85,
-                    powerUsage: 98,
-                    doorTiming: 2.2,
-                    usage: 320
-                },
-                alerts: [],
-                prediction: 'Routine maintenance in 6 weeks'
-            },
-            {
-                id: 'ELV-004',
-                name: 'Hospital D - ICU Block',
-                riskScore: 72,
-                status: 'critical',
-                location: 'Powai',
-                sensors: {
-                    vibration: 6.8,
-                    temperature: 72,
-                    cableTension: 94,
-                    powerUsage: 138,
-                    doorTiming: 3.2,
-                    usage: 180
-                },
-                alerts: ['Cable tension high', 'Increased power consumption'],
-                prediction: 'Cable replacement needed in 10 days'
-            }
-        ];
-
-        // Chart variables
-        let riskTrendChart;
-        let healthDistributionChart;
-
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('current-time').textContent = now.toLocaleTimeString();
-        }
-
-        function getStatusColor(status) {
-            switch(status) {
-                case 'critical': return '#ff5722';
-                case 'warning': return '#ff9800';
-                case 'healthy': return '#4CAF50';
-                default: return '#2196F3';
-            }
-        }
-
-        function updateFleetStats() {
-            const healthy = elevatorData.filter(e => e.status === 'healthy').length;
-            const warning = elevatorData.filter(e => e.status === 'warning').length;
-            const critical = elevatorData.filter(e => e.status === 'critical').length;
-            
-            document.getElementById('healthyElevators').textContent = healthy + 85; // Adding base numbers
-            document.getElementById('warningElevators').textContent = warning + 27;
-            document.getElementById('criticalElevators').textContent = critical + 3;
-        }
-
-        function initializeCharts() {
-            // Risk Trend Chart
-            const riskCtx = document.getElementById('riskTrendChart').getContext('2d');
-            const riskData = generateRiskTrendData();
-            
-            riskTrendChart = new Chart(riskCtx, {
-                type: 'line',
-                data: {
-                    labels: riskData.labels,
-                    datasets: [{
-                        label: 'Average Fleet Risk',
-                        data: riskData.data,
-                        borderColor: '#ff6b35',
-                        backgroundColor: 'rgba(255, 107, 53, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }, {
-                        label: 'Critical Threshold',
-                        data: new Array(riskData.labels.length).fill(70),
-                        borderColor: '#ff5722',
-                        borderDash: [5, 5],
-                        pointRadius: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: { color: 'white' }
-                        }
-                    },
-                    scales: {
-                        x: { 
-                            ticks: { color: 'rgba(255,255,255,0.8)' },
-                            grid: { color: 'rgba(255,255,255,0.1)' }
-                        },
-                        y: { 
-                            ticks: { color: 'rgba(255,255,255,0.8)' },
-                            grid: { color: 'rgba(255,255,255,0.1)' }
-                        }
-                    }
-                }
-            });
-
-            // Health Distribution Chart
-            const healthCtx = document.getElementById('healthDistributionChart').getContext('2d');
-            
-            healthDistributionChart = new Chart(healthCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Healthy', 'Warning', 'Critical'],
-                    datasets: [{
-                        data: [89, 31, 7],
-                        backgroundColor: ['#4CAF50', '#ff9800', '#ff5722'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { 
-                                color: 'white',
-                                padding: 20
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function generateRiskTrendData() {
-            const labels = [];
-            const data = [];
-            const now = new Date();
-            
-            for (let i = 23; i >= 0; i--) {
-                const time = new Date(now.getTime() - i * 60 * 60 * 1000);
-                labels.push(time.getHours() + ':00');
-                // Generate realistic risk trend data
-                data.push(Math.max(20, Math.min(80, 45 + Math.sin(i * 0.3) * 15 + Math.random() * 10)));
-            }
-            
-            return { labels, data };
-        }
-
-        function renderElevatorCards() {
-            const container = document.getElementById('elevatorCards');
-            container.innerHTML = elevatorData.map(elevator => `
-                <div class="elevator-card ${elevator.status}">
-                    <div class="elevator-header">
-                        <h4>${elevator.name}</h4>
-                        <span class="status-badge" style="background: ${getStatusColor(elevator.status)};">
-                            ${elevator.status.toUpperCase()}
-                        </span>
-                    </div>
-                    
-                    <div class="risk-score" style="color: ${getStatusColor(elevator.status)}">
-                        Risk Score: ${elevator.riskScore}%
-                    </div>
-                    
-                    <div class="elevator-location">📍 ${elevator.location}</div>
-                    
-                    <div class="sensor-data">
-                        <div class="sensor-item">
-                            <span class="sensor-label">Vibration:</span>
-                            <span class="sensor-value">${elevator.sensors.vibration.toFixed(1)} Hz</span>
-                        </div>
-                        <div class="sensor-item">
-                            <span class="sensor-label">Temperature:</span>
-                            <span class="sensor-value">${Math.round(elevator.sensors.temperature)}°C</span>
-                        </div>
-                        <div class="sensor-item">
-                            <span class="sensor-label">Cable Tension:</span>
-                            <span class="sensor-value">${elevator.sensors.cableTension}%</span>
-                        </div>
-                        <div class="sensor-item">
-                            <span class="sensor-label">Power Usage:</span>
-                            <span class="sensor-value">${Math.round(elevator.sensors.powerUsage)}W</span>
-                        </div>
-                        <div class="sensor-item">
-                            <span class="sensor-label">Door Timing:</span>
-                            <span class="sensor-value">${elevator.sensors.doorTiming.toFixed(1)}s</span>
-                        </div>
-                        <div class="sensor-item">
-                            <span class="sensor-label">Daily Usage:</span>
-                            <span class="sensor-value">${elevator.sensors.usage} trips</span>
-                        </div>
-                    </div>
-                    
-                    <div class="prediction-box">
-                        <div class="prediction-title">🔮 AI Prediction</div>
-                        <div class="prediction-text">${elevator.prediction}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderAlerts() {
-            const container = document.getElementById('alertsContainer');
-            const allAlerts = [];
-            
-            elevatorData.forEach(elevator => {
-                elevator.alerts.forEach(alert => {
-                    allAlerts.push({
-                        elevator: elevator.name,
-                        alert: alert,
-                        severity: elevator.status,
-                        time: new Date(Date.now() - Math.random() * 3600000).toLocaleTimeString()
-                    });
-                });
-            });
-
-            if (allAlerts.length === 0) {
-                container.innerHTML = '<div class="alert-item"><div class="alert-content">✅ All systems normal - No active alerts</div></div>';
-            } else {
-                container.innerHTML = allAlerts.map(alert => `
-                    <div class="alert-item" style="border-left: 3px solid ${getStatusColor(alert.severity)};">
-                        <div class="alert-content">
-                            <div class="alert-elevator">${alert.elevator}</div>
-                            <div class="alert-message">${alert.alert}</div>
-                        </div>
-                        <div class="alert-time">${alert.time}</div>
-                    </div>
-                `).join('');
-            }
-        }
-
-        function simulateRealTimeUpdates() {
-            // Randomly update sensor values
-            elevatorData.forEach(elevator => {
-                // Small random variations to simulate real-time data
-                elevator.sensors.vibration += (Math.random() - 0.5) * 0.2;
-                elevator.sensors.temperature += (Math.random() - 0.5) * 2;
-                elevator.sensors.powerUsage += (Math.random() - 0.5) * 5;
-                elevator.sensors.usage += Math.floor((Math.random() - 0.5) * 10);
-                
-                // Ensure values stay within realistic ranges
-                elevator.sensors.vibration = Math.max(1, Math.min(10, elevator.sensors.vibration));
-                elevator.sensors.temperature = Math.max(45, Math.min(85, elevator.sensors.temperature));
-                elevator.sensors.powerUsage = Math.max(80, Math.min(160, elevator.sensors.powerUsage));
-            });
-            
-            renderElevatorCards();
-            updateFleetStats();
-            
-            // Update charts periodically
-            if (Math.random() > 0.7) {
-                drawRiskTrendChart();
-            }
-        }
-
-        // Initialize dashboard
-        function initializeDashboard() {
-            renderElevatorCards();
-            renderAlerts();
-            updateFleetStats();
-            initializeCharts();
-            
-            // Update time every second
-            setInterval(updateTime, 1000);
-            updateTime();
-            
-            // Simulate real-time updates every 3 seconds
-            setInterval(simulateRealTimeUpdates, 3000);
-        }
-
-        // Wait for page to load
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeDashboard();
-        });
-        
-        // Smooth scrolling for navigation links
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth'
-                        });
-                    }
-                });
-            });
-
-            // Add animation to stats when they come into view
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.animation = 'fadeInUp 0.6s ease forwards';
-                    }
-                });
-            }, observerOptions);
-
-            document.querySelectorAll('.stat-item, .feature-card').forEach(el => {
-                observer.observe(el);
-            });
-        });
-    </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ElevateAI - Transform Your Elevator Maintenance Business</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ElevateAI — Transform Your Elevator Maintenance Business</title>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            overflow-x: hidden;
-        }
+  <!-- SEO -->
+  <meta name="description" content="ElevateAI helps elevator companies cut breakdowns and costs with AI-powered predictive maintenance and real-time monitoring." />
+  <link rel="canonical" href="https://makepeaceadam.github.io/elevateAI/" />
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
+  <!-- Open Graph / Twitter -->
+  <meta property="og:title" content="ElevateAI — AI for Elevator Maintenance" />
+  <meta property="og:description" content="Predict failures, reduce emergency breakdowns, and boost margins with ElevateAI." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://makepeaceadam.github.io/elevateAI/" />
+  <meta property="og:image" content="https://makepeaceadam.github.io/elevateAI/og-image.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
 
-        /* Header */
-        header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 1rem 0;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
+  <!-- Favicon (replace with your file if you add one) -->
+  <link rel="icon" href="favicon.ico">
 
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+  <!-- Chart.js (for the two charts below) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" defer></script>
 
-        .logo {
-            font-size: 1.8rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-        }
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; overflow-x: hidden; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-        .logo::before {
-            content: "⚡";
-            margin-right: 10px;
-            font-size: 2rem;
-        }
+    /* Fix anchor offset for the fixed header */
+    section { scroll-margin-top: 90px; }
 
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white; padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    nav { display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-size: 1.8rem; font-weight: bold; display: flex; align-items: center; }
+    .logo::before { content: "⚡"; margin-right: 10px; font-size: 2rem; }
+    .nav-links { display: flex; list-style: none; gap: 2rem; }
+    .nav-links a { color: white; text-decoration: none; transition: color 0.3s; }
+    .nav-links a:hover { color: #64b5f6; }
+    .cta-button {
+      background: linear-gradient(45deg, #ff6b35, #f7931e); color: white; padding: 12px 30px; border: none;
+      border-radius: 25px; cursor: pointer; font-weight: bold; text-decoration: none; transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .cta-button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4); }
 
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; padding: 150px 0 100px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ""; position: absolute; inset: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="60" cy="80" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+      animation: float 20s infinite linear;
+    }
+    @keyframes float { 0% { transform: translateY(0) rotate(0); } 100% { transform: translateY(-20px) rotate(360deg); } }
+    .hero-content { position: relative; z-index: 2; }
+    .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; animation: fadeInUp 1s ease; }
+    .hero-subtitle { font-size: 1.3rem; margin-bottom: 2rem; opacity: .9; animation: fadeInUp 1s ease .2s both; }
+    .pain-points {
+      background: rgba(255, 107, 53, 0.1); border-left: 4px solid #ff6b35; padding: 20px; margin: 30px 0; border-radius: 8px;
+      animation: fadeInUp 1s ease .4s both;
+    }
+    .pain-points h3 { color: #ff6b35; margin-bottom: 10px; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-        .nav-links a:hover {
-            color: #64b5f6;
-        }
+    /* Stats */
+    .stats { background: #f8f9ff; padding: 80px 0; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; text-align: center; }
+    .stat-item {
+      background: white; padding: 40px 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .stat-item:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
+    .stat-number { font-size: 3rem; font-weight: bold; color: #1e3c72; margin-bottom: 10px; display: block; }
+    .stat-label { color: #666; font-size: 1.1rem; }
 
-        .cta-button {
-            background: linear-gradient(45deg, #ff6b35, #f7931e);
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            text-decoration: none;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
+    /* Features */
+    .features { padding: 100px 0; background: white; }
+    .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 60px; color: #1e3c72; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; }
+    .feature-card {
+      background: linear-gradient(145deg, #f0f4ff, #e8f2ff); padding: 40px; border-radius: 20px; border: 1px solid rgba(30,60,114,0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(30, 60, 114, 0.15); }
+    .feature-icon { font-size: 3rem; margin-bottom: 20px; display: block; }
+    .feature-title { font-size: 1.5rem; margin-bottom: 15px; color: #1e3c72; }
 
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
-        }
+    /* Dashboard Preview */
+    .dashboard-preview { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 100px 0; }
+    .dashboard-container {
+      background: rgba(255,255,255,0.1); border-radius: 20px; padding: 40px; backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .dashboard-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .live-indicator { display: flex; align-items: center; gap: 10px; }
+    .live-dot { width: 12px; height: 12px; background: #4CAF50; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%{opacity:1;} 50%{opacity:.5;} 100%{opacity:1;} }
+    .elevator-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .elevator-card {
+      background: rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; border: 1px solid rgba(255,255,255,0.2);
+      transition: transform 0.3s;
+    }
+    .elevator-card:hover { transform: scale(1.02); }
+    .elevator-card.critical { border-color: #ff5722; background: rgba(255,87,34,0.1); }
+    .elevator-card.warning  { border-color: #ff9800; background: rgba(255,152,0,0.1); }
+    .elevator-card.healthy  { border-color: #4CAF50; background: rgba(76,175,80,0.1); }
+    .risk-score { font-size: 2rem; font-weight: bold; margin-bottom: 10px; }
+    .sensor-data { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+    .sensor-item { display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; }
 
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-            padding: 150px 0 100px;
-            position: relative;
-            overflow: hidden;
-        }
+    /* CTA */
+    .final-cta { background: linear-gradient(45deg, #ff6b35, #f7931e); color: white; text-align: center; padding: 80px 0; }
+    .final-cta h2 { font-size: 2.5rem; margin-bottom: 20px; }
+    .final-cta p { font-size: 1.3rem; margin-bottom: 40px; opacity: .9; }
+    .cta-buttons { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+    .btn-secondary {
+      background: transparent; color: white; border: 2px solid white; padding: 15px 35px; border-radius: 25px; text-decoration: none;
+      font-weight: bold; transition: all 0.3s;
+    }
+    .btn-secondary:hover { background: white; color: #ff6b35; }
 
-        .hero::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="60" cy="80" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
-            animation: float 20s infinite linear;
-        }
+    /* Footer */
+    footer { background: #1e3c72; color: white; text-align: center; padding: 40px 0; }
 
-        @keyframes float {
-            0% { transform: translateY(0px) rotate(0deg); }
-            100% { transform: translateY(-20px) rotate(360deg); }
-        }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.5rem; }
+      .nav-links { display: none; } /* (Optional) You can add a hamburger later */
+      .elevator-cards { grid-template-columns: 1fr; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+      .dashboard-container { padding: 20px; }
+      .dashboard-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .elevator-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .alert-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .alert-time { align-self: flex-end; }
+    }
 
-        .hero-content {
-            position: relative;
-            z-index: 2;
-        }
+    /* Real-time updates */
+    .updating { animation: glow 2s infinite alternate; }
+    @keyframes glow { from { box-shadow: 0 0 5px rgba(76,175,80,0.5);} to { box-shadow: 0 0 20px rgba(76,175,80,0.8);} }
 
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            animation: fadeInUp 1s ease;
-        }
-
-        .hero-subtitle {
-            font-size: 1.3rem;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-            animation: fadeInUp 1s ease 0.2s both;
-        }
-
-        .pain-points {
-            background: rgba(255, 107, 53, 0.1);
-            border-left: 4px solid #ff6b35;
-            padding: 20px;
-            margin: 30px 0;
-            border-radius: 8px;
-            animation: fadeInUp 1s ease 0.4s both;
-        }
-
-        .pain-points h3 {
-            color: #ff6b35;
-            margin-bottom: 10px;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Stats Section */
-        .stats {
-            background: #f8f9ff;
-            padding: 80px 0;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-            text-align: center;
-        }
-
-        .stat-item {
-            background: white;
-            padding: 40px 20px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .stat-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-        }
-
-        .stat-number {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #1e3c72;
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .stat-label {
-            color: #666;
-            font-size: 1.1rem;
-        }
-
-        /* Features Section */
-        .features {
-            padding: 100px 0;
-            background: white;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 60px;
-            color: #1e3c72;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 40px;
-        }
-
-        .feature-card {
-            background: linear-gradient(145deg, #f0f4ff, #e8f2ff);
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid rgba(30, 60, 114, 0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(30, 60, 114, 0.15);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            display: block;
-        }
-
-        .feature-title {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            color: #1e3c72;
-        }
-
-        /* Dashboard Preview */
-        .dashboard-preview {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 100px 0;
-        }
-
-        .dashboard-container {
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 40px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .live-indicator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .live-dot {
-            width: 12px;
-            height: 12px;
-            background: #4CAF50;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        .elevator-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .elevator-card {
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 25px;
-            border: 1px solid rgba(255,255,255,0.2);
-            transition: transform 0.3s;
-        }
-
-        .elevator-card:hover {
-            transform: scale(1.02);
-        }
-
-        .elevator-card.critical {
-            border-color: #ff5722;
-            background: rgba(255, 87, 34, 0.1);
-        }
-
-        .elevator-card.warning {
-            border-color: #ff9800;
-            background: rgba(255, 152, 0, 0.1);
-        }
-
-        .elevator-card.healthy {
-            border-color: #4CAF50;
-            background: rgba(76, 175, 80, 0.1);
-        }
-
-        .risk-score {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .sensor-data {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .sensor-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-        }
-
-        /* CTA Section */
-        .final-cta {
-            background: linear-gradient(45deg, #ff6b35, #f7931e);
-            color: white;
-            text-align: center;
-            padding: 80px 0;
-        }
-
-        .final-cta h2 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-        }
-
-        .final-cta p {
-            font-size: 1.3rem;
-            margin-bottom: 40px;
-            opacity: 0.9;
-        }
-
-        .cta-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: white;
-            border: 2px solid white;
-            padding: 15px 35px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        .btn-secondary:hover {
-            background: white;
-            color: #ff6b35;
-        }
-
-        /* Footer */
-        footer {
-            background: #1e3c72;
-            color: white;
-            text-align: center;
-            padding: 40px 0;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-            
-            .nav-links {
-                display: none;
-            }
-            
-            .elevator-cards {
-                grid-template-columns: 1fr;
-            }
-            
-            .cta-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .dashboard-container {
-                padding: 20px;
-            }
-            
-            .dashboard-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .elevator-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            
-            .alert-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            
-            .alert-time {
-                align-self: flex-end;
-            }
-        }
-
-        /* Real-time updates */
-        .updating {
-            animation: glow 2s infinite alternate;
-        }
-
-        @keyframes glow {
-            from { box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
-            to { box-shadow: 0 0 20px rgba(76, 175, 80, 0.8); }
-        }
-    </style>
+    /* Respect users who prefer reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <nav class="container">
-            <div class="logo">ElevateAI</div>
-            <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#dashboard">Live Demo</a></li>
-                <li><a href="#roi">ROI Calculator</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-            <a href="#demo" class="cta-button">Book Live Demo</a>
-        </nav>
-    </header>
+  <header>
+    <nav class="container">
+      <div class="logo">ElevateAI</div>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#dashboard">Live Demo</a></li>
+        <li><a href="#roi">ROI Calculator</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <a href="#demo" class="cta-button" role="button">Book Live Demo</a>
+    </nav>
+  </header>
 
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h1>Stop Losing ₹50 Lakhs Annually</h1>
-                <p class="hero-subtitle">Transform from reactive repairs to predictive maintenance with AI-powered elevator monitoring</p>
-                
-                <div class="pain-points">
-                    <h3>What's Costing Your Business Right Now:</h3>
-                    <p>❌ Emergency breakdowns costing ₹2-5 lakhs each<br>
-                    ❌ Customer complaints and contract losses<br>
-                    ❌ Technician overtime and emergency calls<br>
-                    ❌ Unpredictable maintenance schedules<br>
-                    ❌ Reactive approach hurting your reputation</p>
-                </div>
-                
-                <a href="#dashboard" class="cta-button" style="font-size: 1.2rem; padding: 15px 40px;">See Live Dashboard →</a>
-            </div>
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <h1>Stop Losing ₹50 Lakhs Annually</h1>
+        <p class="hero-subtitle">Transform from reactive repairs to predictive maintenance with AI-powered elevator monitoring</p>
+
+        <div class="pain-points">
+          <h3>What's Costing Your Business Right Now:</h3>
+          <p>❌ Emergency breakdowns costing ₹2-5 lakhs each<br>
+             ❌ Customer complaints and contract losses<br>
+             ❌ Technician overtime and emergency calls<br>
+             ❌ Unpredictable maintenance schedules<br>
+             ❌ Reactive approach hurting your reputation</p>
         </div>
-    </section>
 
-    <section class="stats">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <span class="stat-number">78%</span>
-                    <div class="stat-label">Reduction in Emergency Breakdowns</div>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">₹45L</span>
-                    <div class="stat-label">Average Annual Savings</div>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">3 Weeks</span>
-                    <div class="stat-label">Advance Failure Prediction</div>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">95%</span>
-                    <div class="stat-label">Customer Satisfaction Increase</div>
-                </div>
-            </div>
+        <a href="#dashboard" class="cta-button" role="button" style="font-size:1.2rem; padding:15px 40px;">See Live Dashboard →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item"><span class="stat-number">78%</span><div class="stat-label">Reduction in Emergency Breakdowns</div></div>
+        <div class="stat-item"><span class="stat-number">₹45L</span><div class="stat-label">Average Annual Savings</div></div>
+        <div class="stat-item"><span class="stat-number">3 Weeks</span><div class="stat-label">Advance Failure Prediction</div></div>
+        <div class="stat-item"><span class="stat-number">95%</span><div class="stat-label">Customer Satisfaction Increase</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="features">
+    <div class="container">
+      <h2 class="section-title">Why Elevator Companies Choose ElevateAI</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="feature-icon">🎯</span>
+          <h3 class="feature-title">Predict Failures Before They Happen</h3>
+          <p>Our AI analyzes 6 critical parameters and predicts failures 2-4 weeks in advance. No more surprise breakdowns or angry customers.</p>
+          <strong>Result: 78% fewer emergency calls</strong>
         </div>
-    </section>
-
-    <section id="features" class="features">
-        <div class="container">
-            <h2 class="section-title">Why Elevator Companies Choose ElevateAI</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <span class="feature-icon">🎯</span>
-                    <h3 class="feature-title">Predict Failures Before They Happen</h3>
-                    <p>Our AI analyzes 6 critical parameters and predicts failures 2-4 weeks in advance. No more surprise breakdowns or angry customers.</p>
-                    <strong>Result: 78% fewer emergency calls</strong>
-                </div>
-                
-                <div class="feature-card">
-                    <span class="feature-icon">📊</span>
-                    <h3 class="feature-title">Smart Maintenance Scheduling</h3>
-                    <p>Optimize your technician routes and schedules. Our system tells you exactly when and what needs maintenance across your entire fleet.</p>
-                    <strong>Result: 40% reduction in maintenance costs</strong>
-                </div>
-                
-                <div class="feature-card">
-                    <span class="feature-icon">💰</span>
-                    <h3 class="feature-title">Maximize Profit Margins</h3>
-                    <p>Convert from costly reactive repairs to profitable planned maintenance. Increase contract values and reduce operational costs.</p>
-                    <strong>Result: 35% increase in profit margins</strong>
-                </div>
-                
-                <div class="feature-card">
-                    <span class="feature-icon">📱</span>
-                    <h3 class="feature-title">Remote Monitoring & Diagnostics</h3>
-                    <p>Monitor all elevators from one dashboard. Get instant alerts, diagnostic reports, and maintenance recommendations on your phone.</p>
-                    <strong>Result: 60% faster problem resolution</strong>
-                </div>
-                
-                <div class="feature-card">
-                    <span class="feature-icon">🏆</span>
-                    <h3 class="feature-title">Win More Contracts</h3>
-                    <p>Differentiate your business with cutting-edge technology. Show prospects real-time monitoring and predictive insights.</p>
-                    <strong>Result: 50% higher contract win rate</strong>
-                </div>
-                
-                <div class="feature-card">
-                    <span class="feature-icon">⚡</span>
-                    <h3 class="feature-title">Easy Installation & Setup</h3>
-                    <p>Works with any elevator brand. Our sensors install in 30 minutes without disrupting operations. Start seeing results immediately.</p>
-                    <strong>Result: ROI positive within 3 months</strong>
-                </div>
-            </div>
+        <div class="feature-card">
+          <span class="feature-icon">📊</span>
+          <h3 class="feature-title">Smart Maintenance Scheduling</h3>
+          <p>Optimize your technician routes and schedules. Our system tells you exactly when and what needs maintenance across your entire fleet.</p>
+          <strong>Result: 40% reduction in maintenance costs</strong>
         </div>
-    </section>
-
-    <section id="dashboard" class="dashboard-preview">
-        <div class="container">
-            <h2 class="section-title" style="color: white; margin-bottom: 40px;">Live Dashboard Demo</h2>
-            <p style="text-align: center; margin-bottom: 40px; font-size: 1.2rem; opacity: 0.9;">
-                This is what you'll see when monitoring your elevator fleet in real-time
-            </p>
-            
-            <div class="dashboard-container">
-                <div class="dashboard-header">
-                    <h3>ElevateAI Fleet Monitor</h3>
-                    <div class="live-indicator">
-                        <span class="live-dot"></span>
-                        <span>LIVE</span>
-                        <span id="current-time"></span>
-                    </div>
-                </div>
-                
-                <div class="elevator-cards" id="elevatorCards">
-                    <!-- Elevator cards will be populated by JavaScript -->
-                </div>
-                
-                <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
-                    <h4 style="margin-bottom: 15px;">🚨 Active Alerts</h4>
-                    <div id="alertsContainer">
-                        <!-- Alerts will be populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
+        <div class="feature-card">
+          <span class="feature-icon">💰</span>
+          <h3 class="feature-title">Maximize Profit Margins</h3>
+          <p>Convert from costly reactive repairs to profitable planned maintenance. Increase contract values and reduce operational costs.</p>
+          <strong>Result: 35% increase in profit margins</strong>
         </div>
-    </section>
-
-    <section class="final-cta">
-        <div class="container">
-            <h2>Ready to Transform Your Elevator Business?</h2>
-            <p>Join 50+ elevator companies already saving costs and winning more contracts with ElevateAI</p>
-            <div class="cta-buttons">
-                <a href="#" class="cta-button" style="font-size: 1.2rem; padding: 15px 40px;">Book Free Demo</a>
-                <a href="#" class="btn-secondary">Download ROI Calculator</a>
-            </div>
-            <div style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
-                <h3 style="margin-bottom: 15px;">🎯 Special Launch Offer</h3>
-                <p><strong>First 20 customers get:</strong><br>
-                ✅ 50% off first year subscription<br>
-                ✅ Free sensor installation<br>
-                ✅ 3 months free premium support<br>
-                ✅ Custom dashboard setup</p>
-            </div>
+        <div class="feature-card">
+          <span class="feature-icon">📱</span>
+          <h3 class="feature-title">Remote Monitoring & Diagnostics</h3>
+          <p>Monitor all elevators from one dashboard. Get instant alerts, diagnostic reports, and maintenance recommendations on your phone.</p>
+          <strong>Result: 60% faster problem resolution</strong>
         </div>
-    </section>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2025 ElevateAI. Transform Your Elevator Business with Predictive Maintenance.</p>
-            <p>Contact: sales@elevateai.com | +91-9876543210</p>
+        <div class="feature-card">
+          <span class="feature-icon">🏆</span>
+          <h3 class="feature-title">Win More Contracts</h3>
+          <p>Differentiate your business with cutting-edge technology. Show prospects real-time monitoring and predictive insights.</p>
+          <strong>Result: 50% higher contract win rate</strong>
         </div>
-    </footer>
+        <div class="feature-card">
+          <span class="feature-icon">⚡</span>
+          <h3 class="feature-title">Easy Installation & Setup</h3>
+          <p>Works with any elevator brand. Our sensors install in 30 minutes without disrupting operations. Start seeing results immediately.</p>
+          <strong>Result: ROI positive within 3 months</strong>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <script>
-        // Elevator data simulation
-        let elevatorData = [
-            {
-                id: 'ELV-001',
-                name: 'Office Tower A - Main',
-                riskScore: 85,
-                status: 'critical',
-                location: 'Mumbai Central',
-                sensors: {
-                    vibration: 8.2,
-                    temperature: 78,
-                    cableTension: 92,
-                    powerUsage: 145,
-                    doorTiming: 3.8,
-                    usage: 245
-                },
-                alerts: ['Motor overheating detected', 'Vibration levels elevated'],
-                prediction: 'Motor bearing failure in 5-7 days'
-            },
-            {
-                id: 'ELV-002',
-                name: 'Residential Complex B',
-                riskScore: 45,
-                status: 'warning',
-                location: 'Andheri West',
-                sensors: {
-                    vibration: 4.1,
-                    temperature: 65,
-                    cableTension: 88,
-                    powerUsage: 120,
-                    doorTiming: 2.9,
-                    usage: 180
-                },
-                alerts: ['Door timing slightly delayed'],
-                prediction: 'Door adjustment needed in 2 weeks'
-            },
-            {
-                id: 'ELV-003',
-                name: 'Shopping Mall C',
-                riskScore: 15,
-                status: 'healthy',
-                location: 'Bandra East',
-                sensors: {
-                    vibration: 2.1,
-                    temperature: 58,
-                    cableTension: 85,
-                    powerUsage: 98,
-                    doorTiming: 2.2,
-                    usage: 320
-                },
-                alerts: [],
-                prediction: 'Routine maintenance in 6 weeks'
-            },
-            {
-                id: 'ELV-004',
-                name: 'Hospital D - ICU Block',
-                riskScore: 72,
-                status: 'critical',
-                location: 'Powai',
-                sensors: {
-                    vibration: 6.8,
-                    temperature: 72,
-                    cableTension: 94,
-                    powerUsage: 138,
-                    doorTiming: 3.2,
-                    usage: 180
-                },
-                alerts: ['Cable tension high', 'Increased power consumption'],
-                prediction: 'Cable replacement needed in 10 days'
-            }
-        ];
+  <section id="dashboard" class="dashboard-preview">
+    <div class="container">
+      <h2 class="section-title" style="color:white; margin-bottom:40px;">Live Dashboard Demo</h2>
+      <p style="text-align:center; margin-bottom:40px; font-size:1.2rem; opacity:.9;">This is what you'll see when monitoring your elevator fleet in real-time</p>
 
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('current-time').textContent = now.toLocaleTimeString();
+      <div class="dashboard-container">
+        <div class="dashboard-header">
+          <h3>ElevateAI Fleet Monitor</h3>
+          <div class="live-indicator">
+            <span class="live-dot"></span>
+            <span>LIVE</span>
+            <span id="current-time" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <div class="elevator-cards" id="elevatorCards"></div>
+
+        <!-- Charts -->
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; margin-top:30px;">
+          <canvas id="riskTrendChart" height="120"></canvas>
+          <canvas id="healthDistributionChart" height="120"></canvas>
+        </div>
+
+        <div style="margin-top:30px; padding:20px; background:rgba(255,255,255,0.1); border-radius:10px;">
+          <h4 style="margin-bottom:15px;">🚨 Active Alerts</h4>
+          <div id="alertsContainer"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Simple placeholder sections so your navbar links aren't dead -->
+  <section id="roi" class="features">
+    <div class="container">
+      <h2 class="section-title">ROI Calculator</h2>
+      <p style="text-align:center;">Coming soon: estimate savings from predictive maintenance for your portfolio.</p>
+    </div>
+  </section>
+
+  <section id="contact" class="features">
+    <div class="container">
+      <h2 class="section-title">Contact</h2>
+      <p style="text-align:center;">Email: sales@elevateai.com · Phone: +91-9876543210</p>
+    </div>
+  </section>
+
+  <section class="final-cta">
+    <div class="container">
+      <h2>Ready to Transform Your Elevator Business?</h2>
+      <p>Join 50+ elevator companies already saving costs and winning more contracts with ElevateAI</p>
+      <div class="cta-buttons">
+        <a href="#contact" class="cta-button" role="button" style="font-size:1.2rem; padding:15px 40px;">Book Free Demo</a>
+        <a href="#" class="btn-secondary">Download ROI Calculator</a>
+      </div>
+      <div style="margin-top:40px; padding:20px; background:rgba(255,255,255,0.1); border-radius:10px;">
+        <h3 style="margin-bottom:15px;">🎯 Special Launch Offer</h3>
+        <p><strong>First 20 customers get:</strong><br>
+          ✅ 50% off first year subscription<br>
+          ✅ Free sensor installation<br>
+          ✅ 3 months free premium support<br>
+          ✅ Custom dashboard setup
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 ElevateAI. Transform Your Elevator Business with Predictive Maintenance.</p>
+      <p>Contact: sales@elevateai.com | +91-9876543210</p>
+    </div>
+  </footer>
+
+  <script>
+    // ---------- Data ----------
+    const elevatorData = [
+      { id:'ELV-001', name:'Office Tower A - Main', riskScore:85, status:'critical', location:'Mumbai Central',
+        sensors:{vibration:8.2, temperature:78, cableTension:92, powerUsage:145, doorTiming:3.8, usage:245},
+        alerts:['Motor overheating detected','Vibration levels elevated'],
+        prediction:'Motor bearing failure in 5-7 days' },
+      { id:'ELV-002', name:'Residential Complex B', riskScore:45, status:'warning', location:'Andheri West',
+        sensors:{vibration:4.1, temperature:65, cableTension:88, powerUsage:120, doorTiming:2.9, usage:180},
+        alerts:['Door timing slightly delayed'],
+        prediction:'Door adjustment needed in 2 weeks' },
+      { id:'ELV-003', name:'Shopping Mall C', riskScore:15, status:'healthy', location:'Bandra East',
+        sensors:{vibration:2.1, temperature:58, cableTension:85, powerUsage:98, doorTiming:2.2, usage:320},
+        alerts:[], prediction:'Routine maintenance in 6 weeks' },
+      { id:'ELV-004', name:'Hospital D - ICU Block', riskScore:72, status:'critical', location:'Powai',
+        sensors:{vibration:6.8, temperature:72, cableTension:94, powerUsage:138, doorTiming:3.2, usage:180},
+        alerts:['Cable tension high','Increased power consumption'],
+        prediction:'Cable replacement needed in 10 days' }
+    ];
+
+    // ---------- Utils ----------
+    const $ = s => document.querySelector(s);
+    function updateTime(){ const el = $('#current-time'); if (el) el.textContent = new Date().toLocaleTimeString(); }
+    function getStatusColor(s){
+      return s==='critical' ? '#ff5722' : s==='warning' ? '#ff9800' : s==='healthy' ? '#4CAF50' : '#2196F3';
+    }
+
+    // ---------- Renderers ----------
+    function renderElevatorCards(){
+      const html = elevatorData.map(e => `
+        <div class="elevator-card ${e.status}">
+          <div class="elevator-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+            <h4>${e.name}</h4>
+            <span class="status-badge" style="background:${getStatusColor(e.status)};padding:4px 12px;border-radius:15px;font-size:.8rem;">
+              ${e.status.toUpperCase()}
+            </span>
+          </div>
+          <div class="risk-score" style="color:${getStatusColor(e.status)}">Risk Score: ${e.riskScore}%</div>
+          <div class="elevator-location">📍 ${e.location}</div>
+          <div class="sensor-data">
+            <div class="sensor-item"><span class="sensor-label">Vibration:</span><span class="sensor-value">${e.sensors.vibration.toFixed(1)} Hz</span></div>
+            <div class="sensor-item"><span class="sensor-label">Temperature:</span><span class="sensor-value">${Math.round(e.sensors.temperature)}°C</span></div>
+            <div class="sensor-item"><span class="sensor-label">Cable Tension:</span><span class="sensor-value">${e.sensors.cableTension}%</span></div>
+            <div class="sensor-item"><span class="sensor-label">Power Usage:</span><span class="sensor-value">${Math.round(e.sensors.powerUsage)}W</span></div>
+            <div class="sensor-item"><span class="sensor-label">Door Timing:</span><span class="sensor-value">${e.sensors.doorTiming.toFixed(1)}s</span></div>
+            <div class="sensor-item"><span class="sensor-label">Daily Usage:</span><span class="sensor-value">${e.sensors.usage} trips</span></div>
+          </div>
+          <div class="prediction-box" style="margin-top:15px;padding:10px;background:rgba(0,0,0,0.1);border-radius:8px;">
+            <strong>🔮 AI Prediction:</strong><br><span style="font-size:.9rem;">${e.prediction}</span>
+          </div>
+        </div>
+      `).join('');
+      $('#elevatorCards').innerHTML = html;
+    }
+
+    function renderAlerts(){
+      const alerts = [];
+      elevatorData.forEach(e => e.alerts.forEach(msg => alerts.push({
+        elevator: e.name, alert: msg, severity: e.status,
+        time: new Date(Date.now() - Math.random()*3600000).toLocaleTimeString()
+      })));
+      $('#alertsContainer').innerHTML = alerts.length
+        ? alerts.map(a => `
+            <div class="alert-item" style="display:flex;justify-content:space-between;align-items:center;padding:8px;margin:5px 0;background:rgba(255,255,255,0.05);border-radius:5px;border-left:3px solid ${getStatusColor(a.severity)};">
+              <div class="alert-content"><div class="alert-elevator"><strong>${a.elevator}:</strong> ${a.alert}</div></div>
+              <div class="alert-time" style="font-size:.8rem;opacity:.7;">${a.time}</div>
+            </div>
+          `).join('')
+        : '<div class="alert-item"><div class="alert-content">✅ All systems normal - No active alerts</div></div>';
+    }
+
+    // ---------- Charts ----------
+    let riskTrendChart, healthDistributionChart;
+
+    function generateRiskTrendData(){
+      const labels = [], data = [];
+      const now = new Date();
+      for(let i=23;i>=0;i--){
+        const t = new Date(now.getTime() - i*3600000);
+        labels.push(`${t.getHours().toString().padStart(2,'0')}:00`);
+        data.push(Math.max(20, Math.min(80, 45 + Math.sin(i*0.3)*15 + Math.random()*10)));
+      }
+      return { labels, data };
+    }
+
+    function initCharts(){
+      const riskCtx = document.getElementById('riskTrendChart').getContext('2d');
+      const healthCtx = document.getElementById('healthDistributionChart').getContext('2d');
+
+      const rt = generateRiskTrendData();
+      riskTrendChart = new Chart(riskCtx, {
+        type: 'line',
+        data: {
+          labels: rt.labels,
+          datasets: [{
+            label: 'Average Fleet Risk',
+            data: rt.data,
+            borderColor: '#ff6b35',
+            backgroundColor: 'rgba(255,107,53,0.1)',
+            fill: true, tension: 0.4
+          },{
+            label: 'Critical Threshold',
+            data: new Array(rt.labels.length).fill(70),
+            borderColor: '#ff5722',
+            borderDash: [5,5],
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: 'white' } } },
+          scales: {
+            x: { ticks: { color: 'rgba(255,255,255,0.8)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+            y: { ticks: { color: 'rgba(255,255,255,0.8)' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+          }
         }
+      });
 
-        function getStatusColor(status) {
-            switch(status) {
-                case 'critical': return '#ff5722';
-                case 'warning': return '#ff9800';
-                case 'healthy': return '#4CAF50';
-                default: return '#2196F3';
-            }
-        }
+      healthDistributionChart = new Chart(healthCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Healthy','Warning','Critical'],
+          datasets: [{ data:[89,31,7], backgroundColor:['#4CAF50','#ff9800','#ff5722'], borderWidth:0 }]
+        },
+        options: { responsive: true, plugins: { legend: { position:'bottom', labels: { color:'white', padding:20 } } } }
+      });
+    }
 
-        function renderElevatorCards() {
-            const container = document.getElementById('elevatorCards');
-            container.innerHTML = elevatorData.map(elevator => `
-                <div class="elevator-card ${elevator.status}">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h4>${elevator.name}</h4>
-                        <span style="background: ${getStatusColor(elevator.status)}; padding: 4px 12px; border-radius: 15px; font-size: 0.8rem;">
-                            ${elevator.status.toUpperCase()}
-                        </span>
-                    </div>
-                    
-                    <div class="risk-score" style="color: ${getStatusColor(elevator.status)}">
-                        Risk Score: ${elevator.riskScore}%
-                    </div>
-                    
-                    <p style="margin-bottom: 10px; opacity: 0.8;">📍 ${elevator.location}</p>
-                    
-                    <div class="sensor-data">
-                        <div class="sensor-item">
-                            <span>Vibration:</span>
-                            <span>${elevator.sensors.vibration} Hz</span>
-                        </div>
-                        <div class="sensor-item">
-                            <span>Temperature:</span>
-                            <span>${elevator.sensors.temperature}°C</span>
-                        </div>
-                        <div class="sensor-item">
-                            <span>Cable Tension:</span>
-                            <span>${elevator.sensors.cableTension}%</span>
-                        </div>
-                        <div class="sensor-item">
-                            <span>Power Usage:</span>
-                            <span>${elevator.sensors.powerUsage}W</span>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 8px;">
-                        <strong>🔮 AI Prediction:</strong><br>
-                        <span style="font-size: 0.9rem;">${elevator.prediction}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
+    function tick(){
+      // jitter sensor values
+      elevatorData.forEach(e => {
+        e.sensors.vibration = Math.max(1, Math.min(10, e.sensors.vibration + (Math.random()-0.5)*0.2));
+        e.sensors.temperature = Math.max(45, Math.min(85, e.sensors.temperature + (Math.random()-0.5)*2));
+        e.sensors.powerUsage = Math.max(80, Math.min(160, e.sensors.powerUsage + (Math.random()-0.5)*5));
+        e.sensors.usage += Math.floor((Math.random()-0.5)*10);
+      });
+      renderElevatorCards();
 
-        function renderAlerts() {
-            const container = document.getElementById('alertsContainer');
-            const allAlerts = [];
-            
-            elevatorData.forEach(elevator => {
-                elevator.alerts.forEach(alert => {
-                    allAlerts.push({
-                        elevator: elevator.name,
-                        alert: alert,
-                        severity: elevator.status,
-                        time: new Date(Date.now() - Math.random() * 3600000).toLocaleTimeString()
-                    });
-                });
-            });
+      // occasionally nudge the risk chart’s series
+      if (riskTrendChart && Math.random() > 0.7) {
+        const series = riskTrendChart.data.datasets[0].data;
+        series.shift();
+        series.push(Math.max(20, Math.min(80, 45 + Math.random()*20)));
+        riskTrendChart.update();
+      }
+    }
 
-            if (allAlerts.length === 0) {
-                container.innerHTML = '<p style="opacity: 0.7;">✅ All systems normal - No active alerts</p>';
-            } else {
-                container.innerHTML = allAlerts.map(alert => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; margin: 5px 0; background: rgba(255,255,255,0.05); border-radius: 5px; border-left: 3px solid ${getStatusColor(alert.severity)};">
-                        <span><strong>${alert.elevator}:</strong> ${alert.alert}</span>
-                        <span style="font-size: 0.8rem; opacity: 0.7;">${alert.time}</span>
-                    </div>
-                `).join('');
-            }
-        }
+    // ---------- Boot ----------
+    document.addEventListener('DOMContentLoaded', () => {
+      renderElevatorCards();
+      renderAlerts();
+      initCharts();
+      updateTime();
+      setInterval(updateTime, 1000);
+      setInterval(tick, 3000);
 
-        function simulateRealTimeUpdates() {
-            // Randomly update sensor values
-            elevatorData.forEach(elevator => {
-                // Small random variations to simulate real-time data
-                elevator.sensors.vibration += (Math.random() - 0.5) * 0.2;
-                elevator.sensors.temperature += (Math.random() - 0.5) * 2;
-                elevator.sensors.powerUsage += (Math.random() - 0.5) * 5;
-                elevator.sensors.usage += Math.floor((Math.random() - 0.5) * 10);
-                
-                // Ensure values stay within realistic ranges
-                elevator.sensors.vibration = Math.max(1, Math.min(10, elevator.sensors.vibration));
-                elevator.sensors.temperature = Math.max(45, Math.min(85, elevator.sensors.temperature));
-                elevator.sensors.powerUsage = Math.max(80, Math.min(160, elevator.sensors.powerUsage));
-            });
-            
-            renderElevatorCards();
-        }
-
-        // Initialize dashboard
-        renderElevatorCards();
-        renderAlerts();
-        
-        // Update time every second
-        setInterval(updateTime, 1000);
-        updateTime();
-        
-        // Simulate real-time updates every 3 seconds
-        setInterval(simulateRealTimeUpdates, 3000);
-        
-        // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
+      // smooth anchors
+      document.querySelectorAll('a[href^="#"]').forEach(a=>{
+        a.addEventListener('click', e=>{
+          e.preventDefault();
+          const t = document.querySelector(a.getAttribute('href'));
+          if (t) t.scrollIntoView({ behavior:'smooth' });
         });
+      });
 
-        // Add animation to stats when they come into view
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.animation = 'fadeInUp 0.6s ease forwards';
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.stat-item, .feature-card').forEach(el => {
-            observer.observe(el);
+      // animate cards on view
+      const obs = new IntersectionObserver(entries=>{
+        entries.forEach(entry=>{
+          if(entry.isIntersecting){
+            entry.target.style.animation='fadeInUp 0.6s ease forwards';
+          }
         });
-    </script>
+      }, {threshold:0.1, rootMargin:'0px 0px -50px 0px'});
+      document.querySelectorAll('.stat-item, .feature-card').forEach(el=>obs.observe(el));
+    });
+  </script>
 </body>
 </html>
