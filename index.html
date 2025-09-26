@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ElevateAI — Transform Your Elevator Maintenance Business</title>
 
-  <!-- SEO (optional: update og-image if you add one) -->
+  <!-- SEO -->
   <meta name="description" content="ElevateAI helps elevator companies cut breakdowns and costs with AI-powered predictive maintenance and real-time monitoring."/>
   <link rel="canonical" href="https://makepeaceadam.github.io/elevateAI/"/>
   <meta property="og:title" content="ElevateAI — AI for Elevator Maintenance"/>
@@ -14,8 +14,27 @@
   <meta property="og:url" content="https://makepeaceadam.github.io/elevateAI/"/>
   <meta property="og:image" content="https://makepeaceadam.github.io/elevateAI/og-image.jpg"/>
   <meta name="twitter:card" content="summary_large_image"/>
-
   <link rel="icon" href="favicon.ico"/>
+
+  <!-- Google Analytics 4 + Consent Mode (ID: G-YXYTR0D8Z0) -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    // Default deny (EU-friendly) until user consents
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      analytics_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      functionality_storage: 'granted',
+      security_storage: 'granted'
+    });
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YXYTR0D8Z0"></script>
+  <script>
+    gtag('js', new Date());
+    gtag('config', 'G-YXYTR0D8Z0', { anonymize_ip: true });
+  </script>
 
   <!-- Chart.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" defer></script>
@@ -111,7 +130,7 @@
     .sensor-data{ display:grid; grid-template-columns:repeat(2,1fr); gap:15px; margin-top:20px; }
     .sensor-item{ display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,.05); border-radius:8px; }
 
-    /* ROI Section */
+    /* ROI Section & Footer */
     .final-cta{ background:linear-gradient(45deg,#ff6b35,#f7931e); color:#fff; text-align:center; padding:80px 0; }
     footer{ background:#0f172a; color:#fff; text-align:center; padding:40px 0; }
 
@@ -203,7 +222,6 @@
 
       <div class="elevator-cards" id="elevatorCards"></div>
 
-      <!-- Analytics Cards -->
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:30px; margin:30px 0;">
         <div style="background:rgba(255,255,255,.1); border-radius:15px; padding:25px;">
           <h4 style="margin-bottom:20px; text-align:center;">Fleet Risk Trend (24h)</h4>
@@ -244,7 +262,6 @@
   </div>
 </section>
 
-<!-- ROI Calculator -->
 <section id="roi" style="background:#f8f9ff; padding:100px 0;">
   <div class="container">
     <h2 class="section-title" style="color:#0f172a; margin-bottom:40px;">💰 ROI Calculator — 6-Month Projection</h2>
@@ -331,7 +348,6 @@
       </div>
     </div>
 
-    <!-- Notes -->
     <div style="background:#fff; border-radius:15px; padding:25px; margin:20px 0; border-left:4px solid #4CAF50; box-shadow:0 5px 15px rgba(0,0,0,.1);">
       <div style="font-style:italic; margin-bottom:15px; color:#333;">
         "After implementing ElevateAI, we reduced emergency breakdowns by 82% and increased our contract retention rate from 73% to 96%. Our profit margins improved by 45% in just 6 months!"
@@ -379,11 +395,41 @@
   <div class="container">
     <p>&copy; 2025 ElevateAI. Transform Your Elevator Business with Predictive Maintenance.</p>
     <p>Contact: sales@elevateai.com | +91-9876543210</p>
+    <!-- Optional: show a manage link to reopen banner -->
+    <p style="margin-top:8px;"><a href="#" onclick="openCookiePreferences();return false;" style="color:#64b5f6;">Manage cookies</a></p>
   </div>
 </footer>
 
+<!-- Consent Banner (shown until a choice is made) -->
+<style>
+  #cookie-banner {
+    position: fixed; inset: auto 16px 16px 16px; z-index: 9999;
+    background: #0f172a; color: #fff; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    max-width: 860px; margin: 0 auto; display: none;
+  }
+  #cookie-banner h4 { margin: 0 0 8px 0; font-size: 1.1rem; }
+  #cookie-banner p { margin: 0 0 14px 0; opacity: .9; line-height: 1.5; }
+  #cookie-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-accept, .btn-decline {
+    border-radius: 999px; padding: 10px 16px; font-weight: 600; cursor: pointer; border: 0;
+  }
+  .btn-accept { background: linear-gradient(45deg,#ff6b35,#f7931e); color: #fff; }
+  .btn-decline { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,.35); }
+  @media (max-width: 640px){ #cookie-banner { inset: auto 10px 10px 10px; } }
+</style>
+
+<div id="cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie consent">
+  <h4>We use analytics to improve ElevateAI</h4>
+  <p>We’d like to collect anonymous usage analytics (no ads). You can accept or decline. You can change this anytime.</p>
+  <div id="cookie-actions">
+    <button class="btn-decline" id="btnDecline">Decline</button>
+    <button class="btn-accept" id="btnAccept">Accept analytics</button>
+  </div>
+</div>
+
 <script>
-  // ---------------- Colors / helpers ----------------
+  // -------------- Helpers / Theme --------------
   function getStatusColor(status){
     switch(status){
       case 'critical': return '#ff5722';
@@ -394,7 +440,7 @@
   }
   const $ = s => document.querySelector(s);
 
-  // ---------------- Demo Data ----------------
+  // -------------- Demo Data --------------
   const elevatorData = [
     { id:'ELV-001', name:'Office Tower A - Main', riskScore:85, status:'critical', location:'Mumbai Central',
       sensors:{ vibration:8.2, temperature:78, cableTension:92, powerUsage:145, doorTiming:3.8, usage:245 },
@@ -410,13 +456,13 @@
       alerts:['Cable tension high','Increased power consumption'], prediction:'Cable replacement needed in 10 days' }
   ];
 
-  // ---------------- Time ----------------
+  // -------------- Time --------------
   function updateTime(){
     const el = $('#current-time');
     if (el) el.textContent = new Date().toLocaleTimeString();
   }
 
-  // ---------------- Dashboard render ----------------
+  // -------------- Dashboard Render --------------
   function renderElevatorCards(){
     const html = elevatorData.map(e=>`
       <div class="elevator-card ${e.status}">
@@ -476,7 +522,6 @@
     });
     renderElevatorCards();
 
-    // Lightly animate risk chart
     if (window.riskTrendChart && Math.random()>0.7){
       const series = window.riskTrendChart.data.datasets[0].data;
       series.shift();
@@ -485,7 +530,7 @@
     }
   }
 
-  // ---------------- Charts ----------------
+  // -------------- Charts --------------
   function generateRiskTrendData(){
     const labels=[], data=[];
     const now=new Date();
@@ -498,7 +543,6 @@
   }
 
   function initCharts(){
-    // Risk Trend (dark)
     const riskCtx = document.getElementById('riskTrendChart').getContext('2d');
     const rt = generateRiskTrendData();
     window.riskTrendChart = new Chart(riskCtx,{
@@ -529,7 +573,6 @@
       }
     });
 
-    // Health Distribution (dark)
     const healthCtx = document.getElementById('healthDistributionChart').getContext('2d');
     window.healthDistributionChart = new Chart(healthCtx,{
       type:'doughnut',
@@ -540,7 +583,6 @@
       options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{ color:'#fff', padding:20 } } } }
     });
 
-    // Maintenance Bar (dark)
     const maintCtx = document.getElementById('maintenanceChart').getContext('2d');
     window.maintenanceChart = new Chart(maintCtx,{
       type:'bar',
@@ -562,7 +604,7 @@
     });
   }
 
-  // ---------------- ROI Calculator ----------------
+  // -------------- ROI Calculator --------------
   let roiSavingsChart = null;
 
   function initializeROISavingsChart(){
@@ -607,25 +649,21 @@
     const monthlyRevenue = parseInt($('#monthlyRevenue').value) || 8000;
     const contractLoss   = parseFloat($('#contractLoss').value) || 8;
 
-    // Display slider values
     $('#emergencyFreqValue').textContent = emergencyFreq.toFixed(1) + ' calls/month';
     $('#contractLossValue').textContent  = contractLoss + '%';
 
     const months = 6;
 
-    // Current (without ElevateAI)
     const currentEmergencyCosts = numElevators * emergencyFreq * emergencyCost * months;
     const currentLostRevenue    = numElevators * monthlyRevenue * months * (contractLoss / 100);
-    const currentOperational    = numElevators * 500 * 8 * months; // labor proxy
+    const currentOperational    = numElevators * 500 * 8 * months;
 
-    // With ElevateAI (assumptions)
-    const elevateAICost         = numElevators * 1200 * months + numElevators * 8000; // sub + install
+    const elevateAICost         = numElevators * 1200 * months + numElevators * 8000;
     const reducedEmergency      = currentEmergencyCosts * 0.22;  // 78% reduction
     const reducedLostRevenue    = currentLostRevenue  * 0.35;    // retention improves
     const reducedOperational    = currentOperational  * 0.60;    // 40% efficiency gain
     const newContractRevenue    = numElevators * monthlyRevenue * months * 0.35;
 
-    // Savings
     const emergencySavings  = currentEmergencyCosts - reducedEmergency;
     const retainedRevenue   = currentLostRevenue - reducedLostRevenue;
     const operationalSavings= currentOperational - reducedOperational;
@@ -636,36 +674,75 @@
     const roiPercent   = (netROI / elevateAICost) * 100;
     const payback      = elevateAICost / (totalSavings / months);
 
-    // Update UI
-    $('#totalROI').textContent        = '₹' + (netROI/100000).toFixed(1) + 'L';
-    $('#roiPercentage').textContent   = (isFinite(roiPercent)? roiPercent:0).toFixed(0) + '%';
-    $('#emergencySavings').textContent= '₹' + (emergencySavings/100000).toFixed(1) + 'L';
-    $('#retainedRevenue').textContent = '₹' + (retainedRevenue/100000).toFixed(1) + 'L';
-    $('#operationalSavings').textContent = '₹' + (operationalSavings/100000).toFixed(1) + 'L';
-    $('#newContracts').textContent    = '₹' + (newContracts/100000).toFixed(1) + 'L';
-    $('#paybackPeriod').textContent   = (isFinite(payback)? payback:0).toFixed(1) + ' months';
+    $('#totalROI').textContent          = '₹' + (netROI/100000).toFixed(1) + 'L';
+    $('#roiPercentage').textContent     = (isFinite(roiPercent)? roiPercent:0).toFixed(0) + '%';
+    $('#emergencySavings').textContent  = '₹' + (emergencySavings/100000).toFixed(1) + 'L';
+    $('#retainedRevenue').textContent   = '₹' + (retainedRevenue/100000).toFixed(1) + 'L';
+    $('#operationalSavings').textContent= '₹' + (operationalSavings/100000).toFixed(1) + 'L';
+    $('#newContracts').textContent      = '₹' + (newContracts/100000).toFixed(1) + 'L';
+    $('#paybackPeriod').textContent     = (isFinite(payback)? payback:0).toFixed(1) + ' months';
 
     updateROISavingsChart(totalSavings);
   }
 
-  // ---------------- Boot ----------------
+  // -------------- Consent Banner + CTA tracking --------------
+  const LS_KEY = 'elevateai_consent_v1';
+  const banner = document.getElementById('cookie-banner');
+  function applyConsent(consent) {
+    gtag('consent', 'update', {
+      analytics_storage: consent,
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied'
+    });
+  }
+  function saveChoice(consent) {
+    localStorage.setItem(LS_KEY, JSON.stringify({ analytics: consent, ts: Date.now() }));
+  }
+  function openCookiePreferences(){ banner.style.display='block'; }
+  window.openCookiePreferences = openCookiePreferences;
+
+  // Buttons
+  document.getElementById('btnAccept').addEventListener('click', () => {
+    applyConsent('granted'); saveChoice('granted'); banner.style.display = 'none';
+  });
+  document.getElementById('btnDecline').addEventListener('click', () => {
+    applyConsent('denied'); saveChoice('denied'); banner.style.display = 'none';
+  });
+
+  // Init consent (show banner if no saved choice)
+  (function initConsent(){
+    const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (!saved) { banner.style.display = 'block'; } else { applyConsent(saved.analytics); }
+  })();
+
+  // Track CTA clicks
+  document.querySelectorAll('.cta-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      gtag('event', 'cta_click', {
+        label: btn.textContent.trim(),
+        location: window.location.pathname
+      });
+    });
+  });
+
+  // -------------- Boot --------------
   document.addEventListener('DOMContentLoaded', ()=>{
-    // Dashboard
     renderElevatorCards();
     renderAlerts();
     updateFleetStats();
     initCharts();
-    updateTime();
-    setInterval(updateTime, 1000);
-    setInterval(tick, 3000);
 
-    // ROI
     initializeROISavingsChart();
     calculateROI();
     ['numElevators','emergencyCost','emergencyFreq','monthlyRevenue','contractLoss'].forEach(id=>{
       document.getElementById(id).addEventListener('input', calculateROI);
       document.getElementById(id).addEventListener('change', calculateROI);
     });
+
+    updateTime();
+    setInterval(updateTime, 1000);
+    setInterval(tick, 3000);
 
     // Smooth anchors
     document.querySelectorAll('a[href^="#"]').forEach(a=>{
